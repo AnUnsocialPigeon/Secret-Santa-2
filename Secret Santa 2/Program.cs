@@ -40,7 +40,7 @@ namespace Secret_Santa_2 {
 
             NameList = JsonConvert.DeserializeObject<string[]>(File.ReadAllText(nameListDir));
             Dislikes = JsonConvert.DeserializeObject<string[]>(File.ReadAllText(nameListDir)).ToDictionary<string, string>(x => x);
-            Likes = JsonConvert.DeserializeObject<string[]>(File.ReadAllText(likesDir)).ToDictionary<string, string>(x => x);
+            Likes = JsonConvert.DeserializeObject<string[]>(File.ReadAllText(nameListDir)).ToDictionary<string, string>(x => x);
             string[] DislikesJson = JsonConvert.DeserializeObject<string[]>(File.ReadAllText(dislikesDir));
             string[] LikesJson = JsonConvert.DeserializeObject<string[]>(File.ReadAllText(likesDir));
 
@@ -68,7 +68,7 @@ namespace Secret_Santa_2 {
                 matches[match] = "";
             }
 
-            Console.WriteLine(Directory.GetCurrentDirectory() + "\n" + matches);
+            //Console.WriteLine(Directory.GetCurrentDirectory() + "\n" + matches);
 
             // seed setting
             string askSeed = Ask("Seed (blank for random): ");
@@ -76,46 +76,45 @@ namespace Secret_Santa_2 {
             if (askSeed != "" && int.TryParse(askSeed, out int a)) seed = a;
             rnd = new Random(seed);
 
-            Console.WriteLine("Creating List...");
+            Console.WriteLine("Creating List of seed " + seed);
 
-            for (int f = 0; f < 15000; f++) {
-                Console.Title = f.ToString();
 
-                // Setting up the random
-                bool validCycle = false;
-                while (!validCycle) {
-                    remain = NameList.ToList();
+            // Setting up the random
+            bool validCycle = false;
+            while (!validCycle) {
+                remain = NameList.ToList();
 
-                    // Going through and matching
-                    for (int i = 0; i < NameList.Length; i++) {
-                        string interest = "";
-                        bool repeatLastValue = false;
+                // Going through and matching
+                for (int i = 0; i < NameList.Length; i++) {
+                    string interest = "";
+                    bool repeatLastValue = false;
+                    int removalIndex;
 
-                        // Getting the match
-                        do {
-                            interest = remain[rnd.Next(remain.Count)];
-                            matches[NameList[i]] = interest;
-                            if (i >= NameList.Length - 1 && !ValidPair(i, interest)) {
-                                break;
-                            }
-                            repeatLastValue = true;
+                    // Getting the match
+                    do {
+                        removalIndex = rnd.Next(remain.Count);
+                        interest = remain[removalIndex];
+                        matches[NameList[i]] = interest;
+                        if (i >= NameList.Length - 1 && !ValidPair(i, interest)) {
+                            break;
+                        }
+                        repeatLastValue = true;
 
-                            // Add
+                        // Add
 
-                        } while (ValidPair(i, interest));
+                    } while (ValidPair(i, interest));
 
-                        // repeatLastValue is a bool which finds if the last name in the sequence is validly addable to the list.
-                        if (!repeatLastValue && i == NameList.Length - 1) validCycle = true;
-                    }
+                    // repeatLastValue is a bool which finds if the last name in the sequence is validly addable to the list.
+                    if (!repeatLastValue && i == NameList.Length - 1) validCycle = true;
+
+                    remain.RemoveAt(removalIndex);
                 }
-
-                if (matches["OLLIE"] == "JAKE" || matches["JAKE"] == "OLLIE" || matches["JAKE"] == "JAKE") Console.WriteLine("Failure");
             }
 
             Console.WriteLine("Generated List...");
 
             // Formatting for saving
-            File.WriteAllText(saveDir, "");
+            File.WriteAllText(saveDir, "Seed: " + seed.ToString() + "\n\n");
             for (int i = 0; i < Population; i++) {
                 string currentName = NameList[i];
                 string output = currentName + " has " + matches[currentName] + "\nLikes: " + Likes[currentName] + "\nDislikes: " + Dislikes[currentName] + "\n\n";
